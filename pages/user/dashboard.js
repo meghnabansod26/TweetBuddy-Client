@@ -248,7 +248,7 @@ const Home = () => {
             {/* {totalPosts} */}
             <Pagination
               current={page}
-              total={(totalPosts / 3) * 10}
+              total={Math.ceil(totalPosts / 3) * 10}
               onChange={(value) => setPage(value)}
               className="pb-5"
             />
