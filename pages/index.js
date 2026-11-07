@@ -87,13 +87,33 @@ const Home = ({ posts }) => {
 };
 
 export async function getServerSideProps() {
-  const { data } = await axios.get("/posts");
-  // console.log(data);
-  return {
-    props: {
-      posts: data,
-    },
-  };
-}
+  try {
+    const API_URL = process.env.NEXT_PUBLIC_API;
 
+    if (!API_URL) {
+      throw new Error("NEXT_PUBLIC_API environment variable is missing");
+    }
+
+    const { data } = await axios.get(
+      `${API_URL.replace(/\/$/, "")}/posts`
+    );
+
+    return {
+      props: {
+        posts: data || [],
+      },
+    };
+  } catch (error) {
+    console.error(
+      "Error fetching homepage posts:",
+      error.response?.data || error.message
+    );
+
+    return {
+      props: {
+        posts: [],
+      },
+    };
+  }
+}
 export default Home;
