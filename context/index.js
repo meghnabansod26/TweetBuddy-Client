@@ -1,3 +1,4 @@
+
 import { useState, createContext, useEffect } from "react";
 import axios from "axios";
 import { useRouter } from "next/router";
@@ -10,30 +11,42 @@ const UserProvider = ({ children }) => {
     token: "",
   });
 
+  // Track whether authentication has been restored
+  const [authLoaded, setAuthLoaded] = useState(false);
+
   const router = useRouter();
 
-  // Restore authentication state after the browser loads
+  // Restore authentication state from localStorage
   useEffect(() => {
     try {
       const auth = window.localStorage.getItem("auth");
 
       if (auth) {
-        setState(JSON.parse(auth));
+        const parsedAuth = JSON.parse(auth);
+
+        setState({
+          user: parsedAuth.user || {},
+          token: parsedAuth.token || "",
+        });
       }
     } catch (error) {
       console.error("Error restoring authentication:", error);
       window.localStorage.removeItem("auth");
+    } finally {
+      setAuthLoaded(true);
     }
   }, []);
 
+  // Configure Axios
   const token = state?.token || "";
 
   axios.defaults.baseURL = process.env.NEXT_PUBLIC_API;
+
   axios.defaults.headers.common["Authorization"] = token
     ? `Bearer ${token}`
     : "";
 
-  // Register the response interceptor only once per effect lifecycle
+  // Handle unauthorized API responses
   useEffect(() => {
     const interceptorId = axios.interceptors.response.use(
       (response) => response,
@@ -61,7 +74,9 @@ const UserProvider = ({ children }) => {
   }, [router]);
 
   return (
-    <UserContext.Provider value={[state, setState]}>
+    <UserContext.Provider
+      value={[state, setState, authLoaded]}
+    >
       {children}
     </UserContext.Provider>
   );
